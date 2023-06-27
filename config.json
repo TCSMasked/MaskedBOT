@@ -1,10 +1,15 @@
+// Options: online, offline, idle, dnd, invisible
+// Options: true or false
 {
     "token": "TOKEN",
     "guildID": "GUILDID",
     "staffroleID": "STAFFROLEID",
     "mutedroleID": "MUTEDROLEID",
     "logchannelID": "LOGCHANNELID",
-    "botStatus": "dnd", // Options: online, offline, idle, dnd, invisible
+    "botStatus": "dnd",
     "botPrefix": "!",
-    "botStatusMSG": "Hello World!"
+    "botStatusMSG": "Hello World!",
+    "badWordDetecor": "true",
+    "serverInvitesDetector": "true",
+    "AntiSpam": "true"
 }

@@ -1,1 +1,10 @@
-
+{
+    "token": "TOKEN",
+    "guildID": "GUILDID",
+    "staffroleID": "STAFFROLEID",
+    "mutedroleID": "MUTEDROLEID",
+    "logchannelID": "LOGCHANNELID",
+    "botStatus": "dnd", // Options: online, offline, idle, dnd, invisible
+    "botPrefix": "!",
+    "botStatusMSG": "Hello World!"
+}

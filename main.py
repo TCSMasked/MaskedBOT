@@ -4,10 +4,10 @@ from datetime import datetime
 
 with open('config.json', 'r') as f:
     config = json.load(f)
-required_fields = ['token', 'badWordDetector', 'serverInvitesDetector', 'AntiSpam', 'guildID', 'staffroleID', 'mutedroleID', 'logchannelID', 'botStatus', 'botPrefix', 'botStatusMSG']
+required_fields = ['token', 'welcomeFeature', 'goodbyeFeature', 'badWordDetector', 'serverInvitesDetector', 'AntiSpam', 'guildID', 'staffroleID', 'mutedroleID', 'logchannelID', 'botStatus', 'botPrefix', 'botStatusMSG']
 for field in required_fields:
     if field not in config:
-        raise ValueError(f'[ERR] The config value {field} is missing!')
+        raise ValueError(f'[ERR] The config field {field} is missing!')
 token = config['token']
 guildID = config['guildID']
 staffroleID = config['staffroleID']
@@ -19,6 +19,12 @@ botStatusMSG = config['botStatusMSG']
 badWordDetectorOption = config['badWordDetector']
 serverInvitesDetectorOption = config['serverInvitesDetector']
 AntiSpamOption = config['AntiSpam']
+welcomeFeatureOption = config['welcomeFeature']
+welcomeFeatureChannelID = config['welcomeFeatureChannelID']
+goodbyeFeatureOption = config['goodbyeFeature']
+goodbyeFeatureChannelID = config['goodbyeFeatureChannelID']
+goodbyeChannel = client.get_channel(goodbyeFeatureChannelID)
+welcomeChannel = client.get_channel(welcomeFeatureChannelID)
 loggingchannel = client.get_channel(logchannelID)
 mutedrole = guild.get_role(mutedroleID)
 staffrole = guild.get_role(staffroleID)
@@ -86,6 +92,7 @@ async def on_message(message):
 async def on_member_update(before, after):
     if before.nick != after.nick:
         embed = discord.Embed(title="Logging System  ✦  Nickname Changed", colour=0xff0000)
+        embed.add_field(name="Member", value=after.mention, inline=True)
         embed.add_field(name="Name Before", value=before.display_name, inline=True)
         embed.add_field(name="Name After", value=after.display_name, inline=True)
         embed.add_field(name="Time of Change",value=dateandtime, inline=True)
@@ -96,22 +103,32 @@ async def on_member_update(before, after):
 @client.event
 async def on_member_join(member):
     embed = discord.Embed(title="Logging System  ✦  Member Joined", colour=0xff0000)
-    embed.add_field(name="Username", value=member.display_name, inline=True)
+    embed.add_field(name="Member", value=member.mention, inline=True)
     embed.add_field(name="User ID", value=member.id, inline=True)
     embed.add_field(name="Time of Join", value=dateandtime, inline=True)
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed)
+    if welcomeFeatureOption is true:
+        embed2 = discord.Embed(title=f"Welcome to server, {member.display_name}", colour=0x44ff00, timestamp=datetime.now())
+        embed2.set_thumbnail(url="member.avatar_url")
+        embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await welcomeChannel.send(embed=embed2)
 
 @client.event
 async def on_member_remove(member):
     embed = discord.Embed(title="Logging System  ✦  Member Left", colour=0xff0000)
-    embed.add_field(name="Username", value=member.display_name, inline=True)
+    embed.add_field(name="Member", value=member.mention, inline=True)
     embed.add_field(name="User ID", value=member.id, inline=True)
     embed.add_field(name="Time of Leave", value=dateandtime, inline=True)
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed)
+    if goodbyeFeatureOption is true:
+        embed2 = discord.Embed(title=f"{member.display_name} has left. :pleading_face:", colour=0xff0000, timestamp=datetime.now())
+        embed2.set_thumbnail(url="member.avatar_url")
+        embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await welcomeChannel.send(embed=embed2)
 
 @client.event
 async def on_guild_role_create(role):
@@ -149,7 +166,7 @@ async def on_member_update_roles(member, before, after):
     if added_roles:
         role_names = ', '.join([role.name for role in added_roles])
         embed = discord.Embed(title="Logging System  ✦  Role Added", colour=0xff0000)
-        embed.add_field(name="Member Name", value=member.display_name, inline=True)
+        embed.add_field(name="Member", value=member.mention, inline=True)
         embed.add_field(name="Roles Added", value=role_names, inline=True)
         embed.add_field(name="Time of Event", value=dateandtime, inline=True)
         embed.set_thumbnail(url=member.avatar_url)
@@ -158,7 +175,7 @@ async def on_member_update_roles(member, before, after):
     if removed_roles:
         role_names = ', '.join([role.name for role in removed_roles])
         embed2 = discord.Embed(title="Logging System  ✦  Role Removed", colour=0xff0000)
-        embed2.add_field(name="Member Name", value=member.display_name, inline=True)
+        embed2.add_field(name="Member", value=member.mention, inline=True)
         embed2.add_field(name="Roles Removed", value=role_names, inline=True)
         embed2.add_field(name="Time of Event", value=dateandtime, inline=True)
         embed2.set_thumbnail(url=member.avatar_url)
@@ -170,7 +187,7 @@ async def on_voice_state_update(member, before, after):
     if before.channel != after.channel:
         if after.channel:
             embed = discord.Embed(title="Logging System  ✦  Joined VC", colour=0xff0000)
-            embed.add_field(name="Member Name", value=member.display_name, inline=True)
+            embed.add_field(name="Member", value=member.mention, inline=True)
             embed.add_field(name="Channel", value=after.channel.name, inline=True)
             embed.add_field(name="Time of Join", value=dateandtime, inline=True)
             embed.set_thumbnail(url=member.avatar_url)
@@ -178,7 +195,7 @@ async def on_voice_state_update(member, before, after):
             await loggingchannel.send(embed=embed)
         else:
             embed2 = discord.Embed(title="Logging System  ✦  Left VC", colour=0xff0000)
-            embed2.add_field(name="Member Name", value=member.display_name, inline=True)
+            embed2.add_field(name="Member", value=member.mention, inline=True)
             embed2.add_field(name="Channel", value=before.channel.name, inline=True)
             embed2.add_field(name="Time of Leave", value=dateandtime, inline=True)
             embed2.set_thumbnail(url=member.avatar_url)
@@ -217,7 +234,7 @@ async def on_guild_channel_delete(channel):
 @client.event
 async def on_message_delete(message):
     embed = discord.Embed(title="Logging System  ✦  Message Deleted", colour=0xff0000)
-    embed.add_field(name="Member Name", value=message.author.display_name, inline=True)
+    embed.add_field(name="Member", value=message.author.mention, inline=True)
     embed.add_field(name="Message", value=message.content, inline=True)
     embed.add_field(name="Time of Deletion", value=dateandtime, inline=True)
     embed.set_thumbnail(url=message.author.avatar_url)
@@ -228,7 +245,7 @@ async def on_message_delete(message):
 async def on_message_edit(before, after):
     if before.content != after.content:
         embed = discord.Embed(title="Logging System  ✦  Message Edited", colour=0xff0000)
-        embed.add_field(name="Member Name", value=before.author.display_name, inline=True)
+        embed.add_field(name="Member", value=before.author.mention, inline=True)
         embed.add_field(name="Message Before", value=before.content, inline=True)
         embed.add_field(name="Message After", value=after.content, inline=True)
         embed.add_field(name="Time of Deletion", value=dateandtime, inline=True)
@@ -239,27 +256,31 @@ async def on_message_edit(before, after):
 @client.command()
 async def kick(ctx, member : discord.Member, *, reason=None):
     if reason is None:
-        print(f"[KICK] Staff member {ctx.author} failed to give a reason!")
+        print(f"[KICK] Staff member {ctx.author.display_name} failed to give a reason!")
         embed = discord.Embed(title=":red_circle: Please enter a reason for your kick!", colour=0xff0000, timestamp=datetime.now())
         embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=3.5)
     embed2 = discord.Embed(title=f"{member} has been kicked!", colour=0x04ff00)
     embed2.add_field(name="Reason of Kick", value=reason, inline=True)
-    embed2.add_field(name="Staff Member", value=ctx.author, inline=True)
+    embed2.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
     embed2.add_field(name="Time of Kick", value=dateandtime, inline=True)
+    embed2.set_thumbnail(url=member.avatar_url)
     embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await ctx.send(embed=embed2, delete_after=3.5)
-    embed3 = discord.Embed(title=f"{member} has been kicked!", colour=0x04ff00)
+    embed3 = discord.Embed(title=f"Logging System  ✦  Member Kicked", colour=0x04ff00)
+    embed3.add_field(name="Member", value=member.mention, inline=True)
     embed3.add_field(name="Reason of Kick", value=reason, inline=True)
     embed3.add_field(name="Staff Member", value=ctx.author, inline=True)
     embed3.add_field(name="Time of Kick", value=dateandtime, inline=True)
+    embed3.set_thumbnail(url=member.avatar_url)
     embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed3)
-    print(f"[KICK] {member} has been kicked from {guild.name} by {ctx.author} for {reason}")
+    print(f"[KICK] {member.display_name} has been kicked from {guild.name} by {ctx.author.display_name} for {reason}")
     embed4 = discord.Embed(title=f"You have been kicked from {guild.name}", colour=0x1100ff)
     embed4.add_field(name="Reason of Kick", value=reason, inline=True)
     embed4.add_field(name="Staff Member", value=ctx.author, inline=True)
     embed4.add_field(name="Time of Kick", value=dateandtime, inline=True)
+    embed4.set_thumbnail(url=member.avatar_url)
     embed4.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await member.send(embed=embed4)
     await member.kick(reason=reason)
@@ -267,30 +288,34 @@ async def kick(ctx, member : discord.Member, *, reason=None):
 @client.command()
 async def ban(ctx, member : discord.Member, *, reason=None):
     if reason is None:
-        print(f"[BAN] Staff member {ctx.author} failed to give a reason!")
+        print(f"[BAN] Staff member {ctx.author.display_name} failed to give a reason!")
         embed = discord.Embed(title=":red_circle: Please enter a reason for your ban!", colour=0xff0000, timestamp=datetime.now())
         embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
         await ctx.send(embed=embed, delete_after=3.5)
-    embed2 = discord.Embed(title=f"{member.display_name} has been banned!", colour=0x04ff00)
+    embed2 = discord.Embed(title=f"{member.mention} has been banned!", colour=0x04ff00)
     embed2.add_field(name="Reason of Ban", value=reason, inline=True)
     embed2.add_field(name="Length of Ban", value="Permenant", inline=True)
-    embed2.add_field(name="Staff Member", value=ctx.author, inline=True)
+    embed2.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
     embed2.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed2.set_thumbnail(url=member.avatar_url)
     embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await ctx.send(embed=embed2, delete_after=3.5)
-    embed3 = discord.Embed(title=f"{member} has been banned!", colour=0x04ff00)
+    embed3 = discord.Embed(title=f"Logging System  ✦  Member Banned", colour=0x04ff00)
+    embed3.add_field(name="Member", value=member.mention, inline=True)
     embed3.add_field(name="Reason of Ban", value=reason, inline=True)
     embed3.add_field(name="Length of Ban", value="Permenant", inline=True)
-    embed3.add_field(name="Staff Member", value=ctx.author, inline=True)
+    embed3.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
     embed3.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed3.set_thumbnail(url=member.avatar_url)
     embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed3)
-    print(f"[BAN] {member} has been banned from {guild.name} by {ctx.author} for {reason}")
+    print(f"[BAN] {member.display_name} has been banned from {guild.name} by {ctx.author.display_name} for {reason}")
     embed4 = discord.Embed(title=f"You have been banned from {guild.name}", colour=0x1100ff)
     embed4.add_field(name="Reason of Ban", value=reason, inline=True)
     embed4.add_field(name="Length of Ban", value="Permenant", inline=True)
-    embed4.add_field(name="Staff Member", value=ctx.author, inline=True)
+    embed4.add_field(name="Staff Member", value=ctx.author.display_name, inline=True)
     embed4.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed4.set_thumbnail(url=member.avatar_url)
     embed4.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await member.send(embed=embed4)
     await member.ban(reason=reason)
@@ -298,26 +323,56 @@ async def ban(ctx, member : discord.Member, *, reason=None):
 @client.command(aliases=['purge'])
 async def clear(ctx, amount=1):
     if amount is 1:
-        print(f"[CLEAR] Staff member {ctx.author} failed to give an amount!")
+        print(f"[CLEAR] Staff member {ctx.author.display_name} failed to give an amount!")
         embed = discord.Embed(title=":red_circle: Please enter an amount to clear!", colour=0xff0000, timestamp=datetime.now())
         embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
         await ctx.send(embed=embed, delete_after=3.5)
-    print(f"[CLEAR] Staff member {ctx.author} has cleared {amount} messages from {ctx.channel.name}.")
+    print(f"[CLEAR] Staff member {ctx.author.display_name} has cleared {amount} messages from {ctx.channel.name}.")
     embed2 = discord.Embed(title=f"Clearing {amount} messages...", colour=0x1100ff)
-    embed2.add_field(name="Amount of Messages", value=f"{amount} Messages", inline=True)
     embed2.add_field(name="Channel", value={ctx.channel.name}, inline=True)
-    embed2.add_field(name="Staff Member", value={ctx.author}, inline=True)
+    embed2.add_field(name="Amount of Messages", value=f"{amount} Messages", inline=True)
+    embed2.add_field(name="Staff Member", value={ctx.author.mention}, inline=True)
     embed2.add_field(name="Time of Clear", value=dateandtime, inline=True)
     embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await ctx.send(embed=embed2, delete_after=3.5)
     await asyncio.sleep(3.5)
     await ctx.channel.purge(limit=amount)
-    embed3 = discord.Embed(title=f"{ctx.channel.name} has been cleared!", colour=0x1100ff)
-    embed3.add_field(name="Amount of Messages", value=f"{amount} Messages", inline=True)
+    embed3 = discord.Embed(title=f"Logging System  ✦  Channel Cleared", colour=0x1100ff)
     embed3.add_field(name="Channel", value={ctx.channel.name}, inline=True)
-    embed3.add_field(name="Staff Member", value={ctx.author}, inline=True)
+    embed3.add_field(name="Amount of Messages", value=f"{amount} Messages", inline=True)
+    embed3.add_field(name="Staff Member", value={ctx.author.mention}, inline=True)
     embed3.add_field(name="Time of Clear", value=dateandtime, inline=True)
     embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed3)
+
+@client.command()
+async def warn(ctx, member : discord.Member, *, reason=None):
+    if reason is None:
+        print(f"[WARN] Staff member {ctx.author.display_name} failed to give a reason!")
+        embed = discord.Embed(title=":red_circle: Please enter a reason for your warn!", colour=0xff0000, timestamp=datetime.now())
+        embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await ctx.send(embed=embed, delete_after=3.5)
+    embed = discord.Embed(title="Logging System  ✦  Member Warned", colour=0xff0000)
+    embed.add_field(name="Member", value=member.mention, inline=True)
+    embed.add_field(name="Reason", value=reason, inline=True)
+    embed.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed.add_field(name="Time of Warn", value=dateandtime, inline=True)
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await loggingchannel.send(embed=embed)
+    embed2 = discord.Embed(title=f"{member.mention} has been warned!", colour=0xff0000)
+    embed2.add_field(name="Reason", value=reason, inline=True)
+    embed2.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed2.add_field(name="Time of Warn", value=dateandtime, inline=True)
+    embed2.set_thumbnail(url=member.avatar_url)
+    embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await ctx.send(embed=embed2, delete_after=3.5)
+    embed3 = discord.Embed(title=f"You have been warned in {guild.name}", colour=0xff0000)
+    embed3.add_field(name="Reason", value=reason, inline=True)
+    embed3.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed3.add_field(name="Time of Warn", value=dateandtime, inline=True)
+    embed3.set_thumbnail(url=member.avatar_url)
+    embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await member.send(embed=embed3)
 
 client.run(token)

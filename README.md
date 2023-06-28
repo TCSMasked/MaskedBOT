@@ -1,5 +1,4 @@
-
-# Hello Theodore!
+# MaskedBOT
 What is MaskedBOT? Well, MaskedBOT is a Python based Discord bot that has a huge genre of features that you can toggle on and off via the included config file. MaskedBOT is capable of features like banning, kicking, muting, sending embeds and a plethra of other features. The main goal of this bot is to piss of companies like MEE6 or Dyno that has a paywall for some of the most basic features that Discord bots are capable of. As it's Python based and it's open sourced this bot (even with these "premium" features) is COMPLETELY free. There is no paywall, you don't have to pay for anything. You host it on your hardware and I will supply updates & fixes for the bot. I do not expect any payment from this project at all. It is completly just to annoy those scummy companies that charge you for something that took 10 mins to create. Please read through this README.md file as it has some very useful information regarding the bot, how to get it running and how you can request features or support. Thanks!
 
 **WARNING: MaskedBOT is currently still in BETA phase and does not include all the features said above, please check the Features section to see current features in the most recent verison.**

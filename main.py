@@ -4,7 +4,7 @@ from datetime import datetime
 
 with open('config.json', 'r') as f:
     config = json.load(f)
-required_fields = ['token', 'welcomeFeature', 'goodbyeFeature', 'badWordDetector', 'serverInvitesDetector', 'AntiSpam', 'guildID', 'staffroleID', 'mutedroleID', 'logchannelID', 'botStatus', 'botPrefix', 'botStatusMSG']
+required_fields = ['token', 'welcomeFeature', 'goodbyeFeature', 'badWordDetector', 'serverInvitesDetector', 'AntiSpam', 'guildID', 'staffroleID', 'mutedroleID', 'logchannelID', 'clientStatus', 'clientPrefix', 'clientStatusMSG']
 for field in required_fields:
     if field not in config:
         raise ValueError(f'[ERR] The config field {field} is missing!')
@@ -13,9 +13,9 @@ guildID = config['guildID']
 staffroleID = config['staffroleID']
 mutedroleID = config['mutedroleID']
 logchannelID = config['logchannelID']
-botStatus = config['botStatus']
-botPrefix = config['botPrefix']
-botStatusMSG = config['botStatusMSG']
+clientStatus = config['clientStatus']
+clientPrefix = config['clientPrefix']
+clientStatusMSG = config['clientStatusMSG']
 badWordDetectorOption = config['badWordDetector']
 serverInvitesDetectorOption = config['serverInvitesDetector']
 AntiSpamOption = config['AntiSpam']
@@ -36,9 +36,10 @@ variation_patterns = [
     r'([f]+[^\w\s]*[u]+[^\w\s]*[c]+[^\w\s]*[k]+)',
     r'([s]+[^\w\s]*[h]+[^\w\s]*[i]+[^\w\s]*[t]+)'
 ]
+ban_data_file = "ban_data.json"
 
 intents = discord.Intents().all()
-client = commands.Bot(command_prefix=botPrefix, intents=intents, status=discord.Status.botStatus, activity=discord.Game(botStatusMSG))
+client = commands.client(command_prefix=clientPrefix, intents=intents, status=discord.Status.clientStatus, activity=discord.Game(clientStatusMSG))
 
 def contains_bad_word(message):
     content = message.content.lower()
@@ -53,14 +54,23 @@ def contains_bad_word(message):
 @client.event
 async def on_ready():
     guild = client.get_guild(guildID)
-    print(f"+---------------------------------+\n|            MASKEDBOT            |\n|           v1.0.0 BETA           |\n| https://tcsmasked.maskednet.org |\n+---------------------------------+\n>>> BOT INFORMATION <<<\nUsername: {client.user.name}\nStatus: {botStatus}\nStatus MSG: {botStatusMSG}\nPrefix: {botPrefix}\n\n>>> SERVER INFORMATION <<<\nServer Name: {guild.name}\nMember Count: {guild.member_count}\nServer Owner: {guild.owner}\nServer Region: {guild.region}\nServer Verification Level: {guild.verification_level}\nLogging Channel: {loggingchannel.name}\nMuted Role: {mutedrole.name}\nStaff Role: {staffrole.name}\n\nEverything below this line of text will be related to the bots advanced logging system.\n")
+    print(f"+---------------------------------+\n|            MASKEDclient            |\n|           v1.0.0 BETA           |\n| https://tcsmasked.maskednet.org |\n+---------------------------------+\n>>> client INFORMATION <<<\nUsername: {client.user.name}\nStatus: {clientStatus}\nStatus MSG: {clientStatusMSG}\nPrefix: {clientPrefix}\n\n>>> SERVER INFORMATION <<<\nServer Name: {guild.name}\nMember Count: {guild.member_count}\nServer Owner: {guild.owner}\nServer Region: {guild.region}\nServer Verification Level: {guild.verification_level}\nLogging Channel: {loggingchannel.name}\nMuted Role: {mutedrole.name}\nStaff Role: {staffrole.name}\n\nEverything below this line of text will be related to the clients advanced logging system.\n")
     embed = discord.Embed(title="{client.user.name} is now online! :green_circle:", colour=0x00ff33, timestamp=datetime.now())
     embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed)
+    await check_ban_data()
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRole):
+        await ctx.message.delete()
+        embed = discord.Embed(title="Permissions Error", description="We're sorry, but it seems like you are not an authorized staff member. If this is a mistake please bring this up with the server owner.", colour=0xff0000, timestamp=datetime.now())
+        embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await ctx.author.send(embed=embed)
 
 @client.event
 async def on_message(message):
-    if message.author.bot:
+    if message.author.client:
         return
     if badWordDetectorOption is true:
         if contains_bad_word(message):
@@ -254,6 +264,7 @@ async def on_message_edit(before, after):
         await loggingchannel.send(embed=embed)
 
 @client.command()
+@commands.has_role(staffroleID)
 async def kick(ctx, member : discord.Member, *, reason=None):
     if reason is None:
         print(f"[KICK] Staff member {ctx.author.display_name} failed to give a reason!")
@@ -284,8 +295,10 @@ async def kick(ctx, member : discord.Member, *, reason=None):
     embed4.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await member.send(embed=embed4)
     await member.kick(reason=reason)
+    await ctx.message.delete()
 
 @client.command()
+@commands.has_role(staffroleID)
 async def ban(ctx, member : discord.Member, *, reason=None):
     if reason is None:
         print(f"[BAN] Staff member {ctx.author.display_name} failed to give a reason!")
@@ -319,8 +332,10 @@ async def ban(ctx, member : discord.Member, *, reason=None):
     embed4.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await member.send(embed=embed4)
     await member.ban(reason=reason)
+    await ctx.message.delete()
 
 @client.command(aliases=['purge'])
+@commands.has_role(staffroleID)
 async def clear(ctx, amount=1):
     if amount is 1:
         print(f"[CLEAR] Staff member {ctx.author.display_name} failed to give an amount!")
@@ -344,8 +359,10 @@ async def clear(ctx, amount=1):
     embed3.add_field(name="Time of Clear", value=dateandtime, inline=True)
     embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await loggingchannel.send(embed=embed3)
+    await ctx.message.delete()
 
 @client.command()
+@commands.has_role(staffroleID)
 async def warn(ctx, member : discord.Member, *, reason=None):
     if reason is None:
         print(f"[WARN] Staff member {ctx.author.display_name} failed to give a reason!")
@@ -374,5 +391,169 @@ async def warn(ctx, member : discord.Member, *, reason=None):
     embed3.set_thumbnail(url=member.avatar_url)
     embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
     await member.send(embed=embed3)
+    print(f"[WARN] Staff member {ctx.author.display_name} has warned {member.display_name} for {reason}.")
+    await ctx.message.delete()
 
+@client.command()
+@commands.has_role(staffroleID)
+async def slowmode(ctx):
+    if ctx.channel.slowmode_delay == 0:
+        await ctx.channel.edit(slowmode_delay=10)
+        embed = discord.Embed(title="Logging System  ✦  Slowmode Enabled", colour=0xff0000)
+        embed.add_field(name="Channel", value=ctx.channel.name, inline=True)
+        embed.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+        embed.add_field(name="Time of Command", value=dateandtime, inline=True)
+        embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await loggingchannel.send(embed=embed)
+        embed2 = discord.Embed(title="Slowmode Enabled :green_circle:", colour=0x04ff00)
+        embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await loggingchannel.send(embed=embed2, delete_after=3.5)
+        print(f"[SLOWMODE] Staff member {ctx.author.display_name} enabled slowmode in {ctx.channel.name}.")
+    else:
+        await ctx.channel.edit(slowmode_delay=0)
+        embed3 = discord.Embed(title="Logging System  ✦  Slowmode Disabled", colour=0xff0000)
+        embed3.add_field(name="Channel", value=ctx.channel.name, inline=True)
+        embed3.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+        embed3.add_field(name="Time of Command", value=dateandtime, inline=True)
+        embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await loggingchannel.send(embed=embed3)
+        embed4 = discord.Embed(title="Slowmode Disabled :red_circle:", colour=0x04ff00)
+        embed4.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await loggingchannel.send(embed=embed4, delete_after=3.5)
+        print(f"[SLOWMODE] Staff member {ctx.author.display_name} disabled slowmode in {ctx.channel.name}.")
+        await ctx.message.delete()
+
+@client.command()
+@commands.has_role(staffroleID)
+async def unban(ctx, user_id: int):
+    guild = ctx.guild
+    with open(ban_data_file, "r") as file:
+        data = json.load(file)
+    guild_data = data.get(str(guild.id))
+    if guild_data and guild_data["user_id"] == user_id:
+        del data[str(guild.id)]
+        with open(ban_data_file, "w") as file:
+            json.dump(data, file)
+    banned_users = await ctx.guild.bans()
+    for ban_entry in banned_users:
+        if ban_entry.user.id == user_id:
+            await ctx.guild.unban(ban_entry.user)
+            print(f"[UNBAN] {ctx.author.display_name} unbanned the user ID {user_id}.")
+            embed = discord.Embed(title="Logging System  ✦  User Unbanned", colour=0xff0000)
+            embed.add_field(name="User ID", value=user_id, inline=True)
+            embed.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+            embed.add_field(name="Time of Unban", value=dateandtime, inline=True)
+            embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+            await loggingchannel.send(embed=embed)
+            embed2 = discord.Embed(title=f"{user_id} has been unbanned!", colour=0x8cff00, timestamp=datetime.now())
+            embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+            await ctx.send(embed=embed2, delete_after=3.5)
+            await ctx.message.delete()
+            return
+    print(f"[UNBAN] {ctx.author.display_name} tried unbanning a user that was not in the ban list.")
+    embed3 = discord.Embed(title="That User ID was not found in the ban list.", colour=0xff0000, timestamp=datetime.now())
+    embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await ctx.send(embed=embed3, delete_after=3.5)
+    await ctx.message.delete()
+
+@unban.error
+async def unban_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        print(f"[UNBAN] {ctx.author.display_name} attempted to unban an invalid user ID.")
+        embed = discord.Embed(title="Please provide a valid user ID.", colour=0xff0000, timestamp=datetime.now())
+        embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+@client.command()
+@commands.has_role(staffroleID)
+async def tempban(ctx, user: discord.User, duration: str, *, reason: str = None):
+    if reason is None:
+        print(f"[TEMPBAN] Staff member {ctx.author.display_name} failed to give a reason!")
+        embed = discord.Embed(title=":red_circle: Please enter a reason for your warn!", colour=0xff0000, timestamp=datetime.now())
+        embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+        await ctx.send(embed=embed, delete_after=3.5)
+    duration_regex = re.compile(r"(\d+)([a-zA-Z]+)")
+    duration_units = {
+        "y": ("years", "y"),
+        "mo": ("months", "mo"),
+        "d": ("days", "d"),
+        "h": ("hours", "h"),
+        "m": ("minutes", "m"),
+        "s": ("seconds", "s")
+    }
+    duration_parts = duration_regex.findall(duration)
+    if not duration_parts:
+        await ctx.send("Invalid duration format.")
+        return
+    duration_dict = {}
+    for amount, unit in duration_parts:
+        if unit not in duration_units:
+            await ctx.send(f"Invalid duration unit '{unit}'.")
+            return
+        duration_dict[duration_units[unit][0]] = int(amount)
+    duration_obj = datetime.timedelta(**duration_dict)
+    unban_time = datetime.datetime.utcnow() + duration_obj
+    formatted_duration = " ".join([f"{amount}{duration_units[unit][1]}" for unit, amount in duration_dict.items()])
+    guild_id = str(ctx.guild.id)
+    user_id = str(user.id)
+    ban_data = {
+        "user_id": user_id,
+        "unban_time": unban_time.timestamp(),
+        "reason": reason,
+        "banned_by": str(ctx.author.id),
+        "duration": formatted_duration
+    }
+    with open(ban_data_file, "r") as file:
+        data = json.load(file)
+    data[guild_id] = ban_data
+    with open(ban_data_file, "w") as file:
+        json.dump(data, file)
+    await ctx.guild.ban(user, reason=reason)
+    embed = discord.Embed(title="Logging System  ✦  Member Banned", colour=0xff0000)
+    embed.add_field(name="Member", value=user.mention, inline=True)
+    embed.add_field(name="Reason", value=reason, inline=True)
+    embed.add_field(name="Length of Ban", value=formatted_duration, inline=True)
+    embed.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await loggingchannel.send(embed=embed)
+    embed2 = discord.Embed(title=f"{member.mention} has been banned!", colour=0xff0000)
+    embed2.add_field(name="Reason", value=reason, inline=True)
+    embed2.add_field(name="Length of Ban", value=formatted_duration, inline=True)
+    embed2.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed2.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed2.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await ctx.send(embed=embed2, delete_after=3.5)
+    embed3 = discord.Embed(title=f"You have been banned from {guild.name}", colour=0xff0000)
+    embed3.add_field(name="Reason", value=reason, inline=True)
+    embed3.add_field(name="Length of Ban", value=formatted_duration, inline=True)
+    embed3.add_field(name="Staff Member", value=ctx.author.mention, inline=True)
+    embed3.add_field(name="Time of Ban", value=dateandtime, inline=True)
+    embed3.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+    await user.send(embed=embed3, delete_after=3.5)
+    await ctx.message.delete()
+
+async def check_ban_data():
+    with open(ban_data_file, "r") as file:
+        data = json.load(file)
+    for guild_id, guild_data in data.items():
+        unban_time = guild_data["unban_time"]
+        guild = client.get_guild(int(guild_id))
+        if guild and unban_time <= datetime.datetime.utcnow().timestamp():
+            user_id = guild_data["user_id"]
+            user = await client.fetch_user(int(user_id))
+            if user:
+                await guild.unban(user)
+                del data[guild_id]
+                print(f"[TEMPBAN] User ID {user_id} has been automatically unbanned.")
+                embed = discord.Embed(title="Logging System  ✦  Member Unbanned", description="This action was automatic, due to it being a temporary ban.", colour=0xff0000)
+                embed.add_field(name="Member", value=user_id, inline=True)
+                embed.add_field(name="Time of Unban", value=dateandtime, inline=True)
+                embed.set_footer(text="Developed by TCSMasked", icon_url="https://tcsmasked.maskednet.org/tcsmasked.jpg")
+                await loggingchannel.send(embed=embed)
+    with open(ban_data_file, "w") as file:
+        json.dump(data, file)
+
+client.loop.create_task(check_ban_data())
 client.run(token)

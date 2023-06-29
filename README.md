@@ -10,8 +10,8 @@ config.json:
 {
     "token": "TOKEN",
     "guildID": "GUILDID",
-    "staffroleID": "CHANNELID",
-    "mutedroleID": "CHANNELID",
+    "staffroleID": "ROLEID",
+    "mutedroleID": "ROLEID",
     "logchannelID": "CHANNELID",
     "botStatus": "dnd", // Options: online, offline, idle, dnd, invisible
     "botPrefix": "!",
@@ -20,9 +20,11 @@ config.json:
     "serverInvitesDetector": "true",
     "AntiSpam": "true",
     "welcomeFeature": "true",
-    "welcomeFeatureChannelID": "CHANNELID", // leave empty if turned off
+    "welcomeFeatureChannelID": "CHANNELID", // leave empty if false
     "goodbyeFeature": "true",
-    "goodbyeFeatureChannelID": "CHANNELID" // leave empty if turned off
+    "goodbyeFeatureChannelID": "CHANNELID", // leave empty if false
+    "autoroleFeature": "true",
+    "autoroleFeatureRoleID": "ROLEID" // leave empty if false
 }
 ```
 After filling in these **required** fields you can now start the PIP requirements installation.\

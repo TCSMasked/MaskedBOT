@@ -23,10 +23,13 @@ welcomeFeatureOption = config['welcomeFeature']
 welcomeFeatureChannelID = config['welcomeFeatureChannelID']
 goodbyeFeatureOption = config['goodbyeFeature']
 goodbyeFeatureChannelID = config['goodbyeFeatureChannelID']
+autoroleFeatureOption = config['autoroleFeature']
+autoroleFeatureRoleID = config['autoroleFeatureRoleID']
 goodbyeChannel = client.get_channel(goodbyeFeatureChannelID)
 welcomeChannel = client.get_channel(welcomeFeatureChannelID)
 loggingchannel = client.get_channel(logchannelID)
 mutedrole = guild.get_role(mutedroleID)
+autorole = guild.get_role(autoroleFeatureRoleID)
 staffrole = guild.get_role(staffroleID)
 dateandtime = datetime.now().strftime("%d/%m/%Y ✦ %H:%M:%S")
 invite_links = ['discord.gg', 'discord.com/invite']
@@ -61,6 +64,11 @@ async def on_ready():
     await loggingchannel.send(embed=embed)
     await check_ban_data()
     await check_mute_data()
+    for channel in client.guilds[0].channels:
+        if isinstance(channel, discord.TextChannel):
+            await channel.set_permissions(mutedrole, send_messages=False, add_reactions=False, attach_files=False, send_voice_messages=False)
+        elif isinstance(channel, discord.VoiceChannel):
+            await channel.set_permissions(mutedrole, use_soundboard=False, request_to_speak=False, speak=False, send_messages=False, priority_speaker=False)
 
 @client.event
 async def on_command_error(ctx, error):
@@ -114,6 +122,8 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_member_join(member):
+    if autoroleFeatureOption is true:
+        await client.add_roles(member, autorole)
     embed = discord.Embed(title="Logging System  ✦  Member Joined", colour=0xff0000)
     embed.add_field(name="Member", value=member.mention, inline=True)
     embed.add_field(name="User ID", value=member.id, inline=True)
